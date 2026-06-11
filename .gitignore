@@ -13,6 +13,10 @@ venv/
 .env
 *.egg
 
+# TypeScript
+typescript/node_modules
+typescript/examples/chatbot-with-memory/chat_memory/
+
 # IDE
 .idea/
 .vscode/
