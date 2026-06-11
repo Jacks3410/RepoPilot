@@ -13,6 +13,9 @@ venv/
 .env
 *.egg
 
+# TypeScript
+typescript/node_modules
+
 # Local dependencies
 node_modules/
 note_modules/
