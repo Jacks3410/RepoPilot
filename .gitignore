@@ -15,7 +15,10 @@ venv/
 
 # TypeScript
 typescript/node_modules
-typescript/examples/chatbot-with-memory/chat_memory/
+
+# Local dependencies
+node_modules/
+note_modules/
 
 # IDE
 .idea/
