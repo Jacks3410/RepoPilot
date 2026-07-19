@@ -6,8 +6,6 @@ It can also help you land an agent-related job or internship. Quite a few studen
 
 ## Sponsor
 
-[![MyClaw.ai - Your OpenClaw Agent, Always On.](./assets/myclaw-banner.svg)](https://myclaw.ai?utm_source=github&utm_campaign=learn-openclaw)
-
 **[MyClaw.ai](https://myclaw.ai?utm_source=github&utm_campaign=learn-openclaw)** · Run OpenClaw without managing a server. Get a full cloud-hosted OpenClaw instance with one-click setup, 24/7 uptime, and complete data ownership. [Get started now ->](https://myclaw.ai?utm_source=github&utm_campaign=learn-openclaw)
 
 ## Overview

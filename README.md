@@ -6,8 +6,6 @@
 
 ## 赞助商
 
-[![MyClaw.ai - Your OpenClaw Agent, Always On.](./assets/myclaw-banner.svg)](https://myclaw.ai?utm_source=github&utm_campaign=learn-openclaw)
-
 **[MyClaw.ai](https://myclaw.ai?utm_source=github&utm_campaign=learn-openclaw)** · 不想自己折腾服务器的话，可以用云端托管的 OpenClaw 实例：一键设置、24/7 在线，并且保留完整代码控制权和数据所有权。[立即开始 ->](https://myclaw.ai?utm_source=github&utm_campaign=learn-openclaw)
 
 ## 总体内容展示
