@@ -1,7 +1,7 @@
 [poipoi-agent](https://github.com/lasywolf/Learn-OpenClaw)
 # 比 Multica 更好用的开箱即用 PRD2PR Skill
 
-![PRD2PR：人工把关的 AI 软件交付](images/hero.png)
+![PRD2PR：人工把关的 AI 软件交付](images/hero.webp)
 
 > prd2pr skill 在页面最下面。目前我自己每天都在用这个 skill，感觉自己飞升了：vibe coding 由两并发升为四并发，且下班时不再精疲力尽。
 
@@ -27,7 +27,7 @@
 "可以了，我 review 完了，你去 commit 吧"
 ```
 
-![与 AI 多轮对话完成 Issue 到 PR 的日常流程](images/dialogue-flow.png)
+![与 AI 多轮对话完成 Issue 到 PR 的日常流程](images/dialogue-flow.webp)
 
 如果按照 todolist 来看，也就是：
 
@@ -46,7 +46,7 @@ prd2pr TODO
 
 如果我们将这里面的绝大部分步骤用 AI 来自动跑，而人类只需要做好 review plan detail 和 code review 就够了，恭喜你发明了 prd2pr。如果我们把这个流程 todolist 写成 skill，并且使用 `/goal` 强制要求 AI 来执行 todolist，恭喜你发明了 prd2pr skill，如下图。（如果想要了解 `/goal` 是什么，可以问一下 ai）
 
-![PRD2PR 从 Issue 到 PR 或发布的质量门禁交付流程](images/quality-gates.png)
+![PRD2PR 从 Issue 到 PR 或发布的质量门禁交付流程](images/quality-gates.webp)
 
 ## 如何保证代码质量？
 
@@ -60,7 +60,7 @@ prd2pr TODO
 
 这个时候就有细心的同学发现了，开发流程已经有了完整的闭环：从 issue 到开发、测试、合代码、上线、可观测发现 issue，再回到开发。后面会再写一篇文章详细介绍 bugbot（当然 KM 已经有很多介绍巡检机器人的实践）。
 
-![从开发到上线后观测、再回到 Issue 的质量闭环](images/observability-loop.png)
+![从开发到上线后观测、再回到 Issue 的质量闭环](images/observability-loop.webp)
 
 ### 这不还是需要人来 review 吗？
 
@@ -147,7 +147,7 @@ Multica 开头已经提到过了，有以下难用的点：
 
 3. 不能开箱即用，得要注册登录且只能通过网页交互，而不是像之前一样在 VS Code 之类的 IDE 中交互。
 
-![Multica 任务编排工作流](images/multica-workflow.png)
+![Multica 任务编排工作流](images/multica-workflow.webp)
 
 ### Superpowers
 
@@ -157,7 +157,7 @@ Multica 开头已经提到过了，有以下难用的点：
 
 2. 它不方便自己定制化，流程已经固定下来了。并且我相信，使用 Superpowers 的 99% 的人不会选择拉下代码后，自己修改流程以适配自己的项目。
 
-![Superpowers 从需求澄清到分支收尾的工作流](images/superpowers-workflow.png)
+![Superpowers 从需求澄清到分支收尾的工作流](images/superpowers-workflow.webp)
 
 ## 其他
 
