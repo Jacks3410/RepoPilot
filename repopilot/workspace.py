@@ -73,3 +73,19 @@ class Workspace:
                 break
 
         return entries
+
+    def write_text(
+        self,
+        user_path: str | Path,
+        content: str,
+    ) -> Path:
+        """在工作目录内写入 UTF-8 文件。"""
+        path = self.resolve(user_path)
+
+        if path == self.root:
+            raise IsADirectoryError("不能将工作目录本身作为文件写入")
+
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(content, encoding="utf-8")
+
+        return path
