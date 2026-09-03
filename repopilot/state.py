@@ -29,6 +29,11 @@ class TaskState:
     tool_calls: list[dict[str, Any]] = field(default_factory=list)
     last_error: str | None = None
     verification: dict[str, Any] = field(default_factory=dict)
+    model_usage: dict[str, int] = field(default_factory=lambda: {
+        "prompt_tokens": 0,
+        "completion_tokens": 0,
+        "total_tokens": 0,
+    })
 
     @classmethod
     def create(
@@ -75,6 +80,14 @@ class TaskState:
         self.last_error = reason
         self.status = TaskStatus.BLOCKED
         self.record(f"任务阻断: {reason}")
+
+    def record_model_usage(self, usage: Any) -> None:
+        if not isinstance(usage, dict):
+            return
+        for key in ("prompt_tokens", "completion_tokens", "total_tokens"):
+            value = usage.get(key)
+            if isinstance(value, int) and not isinstance(value, bool) and value >= 0:
+                self.model_usage[key] = self.model_usage.get(key, 0) + value
 
     def record(self, message: str) -> None:
         timestamp = datetime.now(timezone.utc).isoformat()

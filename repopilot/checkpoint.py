@@ -46,6 +46,7 @@ class TaskCheckpointStore:
                 "tool_calls": state.tool_calls,
                 "last_error": state.last_error,
                 "verification": state.verification,
+                "model_usage": state.model_usage,
             },
         }
         safe_payload = redact_sensitive_data(payload)
@@ -86,6 +87,12 @@ class TaskCheckpointStore:
             tool_calls=list(task.get("tool_calls", [])),
             last_error=task.get("last_error"),
             verification=dict(task.get("verification", {})),
+            model_usage={
+                "prompt_tokens": 0,
+                "completion_tokens": 0,
+                "total_tokens": 0,
+                **dict(task.get("model_usage", {})),
+            },
         )
 
     def latest_recoverable(self) -> TaskState | None:

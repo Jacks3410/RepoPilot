@@ -47,6 +47,7 @@ class RunReportWriter:
                 "last_error": state.last_error,
             },
             "verification": dict(state.verification),
+            "model_usage": dict(state.model_usage),
             "events": list(state.events),
             "tool_calls": list(state.tool_calls),
             "git": {

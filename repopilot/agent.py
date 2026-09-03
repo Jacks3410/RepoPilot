@@ -13,6 +13,7 @@ from repopilot.execution_tools import build_execution_tools
 from repopilot.file_tools import build_workspace_tools
 from repopilot.loop_guard import ToolLoopGuard
 from repopilot.state import TaskState, TaskStatus
+from repopilot.test_runner import TestRunner
 from repopilot.verification import VerificationTracker
 from repopilot.workspace import Workspace
 
@@ -49,6 +50,7 @@ class RepoAgent:
         max_repair_attempts: int = 3,
         checkpoint_store: TaskCheckpointStore | None = None,
         max_repeated_tool_calls: int = 3,
+        test_runner: TestRunner | None = None,
     ) -> None:
         if max_repair_attempts < 0:
             raise ValueError("最大修复次数不能小于 0")
@@ -72,6 +74,7 @@ class RepoAgent:
                 build_execution_tools(
                     workspace=workspace,
                     approval_gate=approval_gate,
+                    test_runner=test_runner,
                 )
             )
 
@@ -130,6 +133,7 @@ class RepoAgent:
                     tools=[tool.to_llm_format() for tool in self.tools],
                     system_prompt=SYSTEM_PROMPT,
                 )
+                state.record_model_usage(assistant.get("usage"))
 
                 messages.append(
                     self._assistant_history_message(assistant)
