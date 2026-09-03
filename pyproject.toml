@@ -16,3 +16,13 @@ chatbot = "examples.chatbot:main"
 workflow = "examples.workflow:main"
 search = "examples.search_agent:main"
 nodes = "examples.node_examples:main"
+
+[dependency-groups]
+dev = [
+    "pytest>=9.1.1",
+]
+
+[tool.pytest.ini_options]
+pythonpath = ["."]
+testpaths = ["tests"]
+addopts = "--basetemp=.pytest_tmp"

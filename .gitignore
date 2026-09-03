@@ -29,3 +29,7 @@ note_modules/
 # Agent runtime data
 chat_memory/
 .repopilot/
+
+# Test runtime data
+.pytest_cache/
+.pytest_tmp/
