@@ -148,6 +148,7 @@ class RepoAgent:
                 state.fail(exc)
             print(f"\n任务执行失败：{exc}")
 
+        state.verification = verification.summary()
         return state
 
     @staticmethod

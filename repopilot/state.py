@@ -4,6 +4,7 @@ from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from enum import Enum
 from pathlib import Path
+from typing import Any
 from uuid import uuid4
 
 
@@ -26,6 +27,7 @@ class TaskState:
     max_steps: int = 12
     events: list[str] = field(default_factory=list)
     last_error: str | None = None
+    verification: dict[str, Any] = field(default_factory=dict)
 
     @classmethod
     def create(

@@ -6,6 +6,7 @@ from pathlib import Path
 from repopilot.agent import RepoAgent
 from repopilot.approval import ApprovalGate, terminal_approval
 from repopilot.git_repo import GitCommandError, GitRepository
+from repopilot.run_report import RunReportWriter
 from repopilot.workspace import Workspace
 
 
@@ -50,10 +51,26 @@ def main() -> None:
     print("Git 审计报告")
     print("=" * 60)
 
+    git_status = ""
+    git_diff = ""
+
     try:
+        git_status = repository.status_short()
+        git_diff = repository.diff()
         print(repository.report())
     except GitCommandError as exc:
         print(f"无法生成 Git 审计报告：{exc}")
+
+    try:
+        report_path = RunReportWriter(workspace.root).write(
+            state=state,
+            git_status=git_status,
+            git_diff=git_diff,
+        )
+        relative_report = report_path.relative_to(workspace.root)
+        print(f"\n运行报告已保存：{relative_report}")
+    except OSError as exc:
+        print(f"无法保存运行报告：{exc}")
 
 
 if __name__ == "__main__":

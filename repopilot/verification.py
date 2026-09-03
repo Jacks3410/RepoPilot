@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from typing import Any
 
 
 @dataclass
@@ -37,6 +38,17 @@ class VerificationTracker:
             self.last_test_passed is False
             and self.repair_attempts >= self.max_repair_attempts
         )
+
+    def summary(self) -> dict[str, Any]:
+        """返回可写入运行报告的验证指标。"""
+        return {
+            "successful_writes": self.successful_writes,
+            "test_runs": self.test_runs,
+            "repair_attempts": self.repair_attempts,
+            "max_repair_attempts": self.max_repair_attempts,
+            "last_test_passed": self.last_test_passed,
+            "repair_budget_exhausted": self.repair_budget_exhausted(),
+        }
 
     def completion_blocker(self) -> str | None:
         """返回阻止任务完成的原因；没有原因时返回 None。"""
