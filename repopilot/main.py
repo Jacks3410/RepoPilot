@@ -3,7 +3,8 @@ from __future__ import annotations
 import os
 from pathlib import Path
 
-from repopilot.state import TaskState
+from repopilot.agent import RepoAgent
+from repopilot.workspace import Workspace
 
 
 def main() -> None:
@@ -13,28 +14,21 @@ def main() -> None:
 
     if not os.environ.get("OPENAI_API_KEY"):
         print("错误：尚未配置 OPENAI_API_KEY")
-        kahus
         return
 
-    goal = input("请输入开发任务：").strip()
+    goal = input("请输入仓库分析任务：").strip()
+    if not goal:
+        print("错误：任务不能为空")
+        return
 
-    try:
-        task = TaskState.create(
-            goal=goal,
-            workspace=Path.cwd(),
-            max_steps=12,
-        )
-        task.start()
-        task.begin_step("初始化任务")
+    workspace = Workspace(Path.cwd())
+    agent = RepoAgent(workspace=workspace, max_steps=8)
+    state = agent.run(goal)
 
-        print(f"\n任务 ID：{task.task_id}")
-        print(f"任务状态：{task.status.value}")
-        print(f"工作目录：{task.workspace}")
-        print(f"任务目标：{task.goal}")
-        print(f"最大步数：{task.max_steps}")
-
-    except Exception as exc:
-        print(f"任务创建失败：{exc}")
+    print("\n" + "=" * 60)
+    print(f"任务 ID：{state.task_id}")
+    print(f"最终状态：{state.status.value}")
+    print(f"执行步数：{state.step_count}/{state.max_steps}")
 
 
 if __name__ == "__main__":
