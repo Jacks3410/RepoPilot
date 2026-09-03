@@ -9,6 +9,7 @@ from repopilot.file_tools import build_workspace_tools
 from repopilot.state import TaskState, TaskStatus
 from repopilot.workspace import Workspace
 from repopilot.approval import ApprovalGate
+from repopilot.execution_tools import build_execution_tools
 
 SYSTEM_PROMPT = """
 你是 RepoPilot，一个代码仓库分析 Agent。
@@ -43,6 +44,14 @@ class RepoAgent:
             workspace,
             approval_gate=approval_gate,
         )
+
+        if approval_gate is not None:
+            self.tools.extend(
+                build_execution_tools(
+                    workspace=workspace,
+                    approval_gate=approval_gate,
+                )
+            )
         self.tool_map = {tool.name: tool for tool in self.tools}
 
     def run(self, goal: str) -> TaskState:
