@@ -50,6 +50,26 @@ class VerificationTracker:
             "repair_budget_exhausted": self.repair_budget_exhausted(),
         }
 
+    @classmethod
+    def from_summary(
+        cls,
+        summary: dict[str, Any],
+        default_max_repair_attempts: int = 3,
+    ) -> "VerificationTracker":
+        """从可信检查点恢复验证计数。"""
+        return cls(
+            max_repair_attempts=int(
+                summary.get(
+                    "max_repair_attempts",
+                    default_max_repair_attempts,
+                )
+            ),
+            successful_writes=int(summary.get("successful_writes", 0)),
+            test_runs=int(summary.get("test_runs", 0)),
+            repair_attempts=int(summary.get("repair_attempts", 0)),
+            last_test_passed=summary.get("last_test_passed"),
+        )
+
     def completion_blocker(self) -> str | None:
         """返回阻止任务完成的原因；没有原因时返回 None。"""
         if self.successful_writes == 0:

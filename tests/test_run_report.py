@@ -43,7 +43,7 @@ def test_writer_creates_structured_json_report(tmp_path: Path) -> None:
     assert report_path == (
         tmp_path / ".repopilot" / "runs" / f"{state.task_id}.json"
     )
-    assert payload["schema_version"] == 1
+    assert payload["schema_version"] == 2
     assert payload["task"]["goal"] == "修复中文接口"
     assert payload["task"]["status"] == TaskStatus.COMPLETED.value
     assert payload["verification"]["last_test_passed"] is True

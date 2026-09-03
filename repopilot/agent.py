@@ -8,6 +8,7 @@ from typing import Any
 from core.llm import call_llm
 from repopilot.approval import ApprovalGate
 from repopilot.audit import build_tool_audit_record
+from repopilot.checkpoint import TaskCheckpointStore
 from repopilot.execution_tools import build_execution_tools
 from repopilot.file_tools import build_workspace_tools
 from repopilot.state import TaskState, TaskStatus
@@ -44,6 +45,7 @@ class RepoAgent:
         llm_call: LLMCall = call_llm,
         approval_gate: ApprovalGate | None = None,
         max_repair_attempts: int = 3,
+        checkpoint_store: TaskCheckpointStore | None = None,
     ) -> None:
         if max_repair_attempts < 0:
             raise ValueError("最大修复次数不能小于 0")
@@ -52,6 +54,7 @@ class RepoAgent:
         self.max_steps = max_steps
         self.llm_call = llm_call
         self.max_repair_attempts = max_repair_attempts
+        self.checkpoint_store = checkpoint_store
 
         self.tools = build_workspace_tools(
             workspace,
@@ -68,24 +71,49 @@ class RepoAgent:
 
         self.tool_map = {tool.name: tool for tool in self.tools}
 
-    def run(self, goal: str) -> TaskState:
-        state = TaskState.create(
-            goal=goal,
-            workspace=self.workspace.root,
-            max_steps=self.max_steps,
-        )
-        state.start()
-
-        verification = VerificationTracker(
-            max_repair_attempts=self.max_repair_attempts
-        )
-        messages: list[dict[str, Any]] = [
-            {"role": "user", "content": goal}
-        ]
+    def run(
+        self,
+        goal: str,
+        resume_state: TaskState | None = None,
+    ) -> TaskState:
+        if resume_state is None:
+            state = TaskState.create(
+                goal=goal,
+                workspace=self.workspace.root,
+                max_steps=self.max_steps,
+            )
+            state.start()
+            verification = VerificationTracker(
+                max_repair_attempts=self.max_repair_attempts
+            )
+            messages: list[dict[str, Any]] = [
+                {"role": "user", "content": goal}
+            ]
+        else:
+            state = self._prepare_resume_state(resume_state)
+            verification = VerificationTracker.from_summary(
+                state.verification,
+                default_max_repair_attempts=self.max_repair_attempts,
+            )
+            state.record("任务从安全检查点恢复")
+            messages = [
+                {"role": "user", "content": state.goal},
+                {
+                    "role": "user",
+                    "content": (
+                        "这是一次中断恢复。历史模型对话和文件正文没有"
+                        "被保存。请重新检查仓库当前状态，再继续任务；"
+                        "不要假设中断前的操作已经成功。"
+                    ),
+                },
+            ]
 
         try:
+            self._save_checkpoint(state, verification)
+
             while state.status == TaskStatus.RUNNING:
                 state.begin_step("调用模型")
+                self._save_checkpoint(state, verification)
 
                 assistant = self.llm_call(
                     messages=messages,
@@ -114,12 +142,14 @@ class RepoAgent:
                             ),
                         })
                         print(f"\n[Verification Guard] {blocker}\n")
+                        self._save_checkpoint(state, verification)
                         continue
 
                     if content:
                         print(f"\nRepoPilot：{content}\n")
 
                     state.complete()
+                    self._save_checkpoint(state, verification)
                     break
 
                 if content:
@@ -153,6 +183,10 @@ class RepoAgent:
                         assert reason is not None
                         state.fail(reason)
                         print(f"\n[Repair Budget] {reason}\n")
+
+                    self._save_checkpoint(state, verification)
+
+                    if state.status != TaskStatus.RUNNING:
                         break
 
         except Exception as exc:
@@ -161,7 +195,24 @@ class RepoAgent:
             print(f"\n任务执行失败：{exc}")
 
         state.verification = verification.summary()
+        self._save_checkpoint(state, verification)
         return state
+
+    def _prepare_resume_state(self, state: TaskState) -> TaskState:
+        if state.workspace.resolve() != self.workspace.root:
+            raise ValueError("恢复任务的工作目录与当前工作目录不一致")
+        if state.status != TaskStatus.RUNNING:
+            raise ValueError("只能恢复处于运行状态的任务")
+        return state
+
+    def _save_checkpoint(
+        self,
+        state: TaskState,
+        verification: VerificationTracker,
+    ) -> None:
+        state.verification = verification.summary()
+        if self.checkpoint_store is not None:
+            self.checkpoint_store.save(state)
 
     @staticmethod
     def _assistant_history_message(

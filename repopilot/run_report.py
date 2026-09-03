@@ -34,7 +34,7 @@ class RunReportWriter:
     ) -> dict[str, Any]:
         """构建版本化、可 JSON 序列化的报告内容。"""
         return {
-            "schema_version": 1,
+            "schema_version": 2,
             "generated_at": datetime.now(timezone.utc).isoformat(),
             "task": {
                 "task_id": state.task_id,
