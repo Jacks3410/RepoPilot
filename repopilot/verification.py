@@ -7,29 +7,47 @@ from dataclasses import dataclass
 class VerificationTracker:
     """跟踪文件修改与测试验证状态。"""
 
+    max_repair_attempts: int = 3
     successful_writes: int = 0
     test_runs: int = 0
+    repair_attempts: int = 0
     last_test_passed: bool | None = None
 
     def record_tool_result(self, tool_name: str, content: str) -> None:
         """根据成功的工具结果更新验证状态。"""
         if tool_name == "write_file" and content.startswith("已写入文件："):
+            if self.last_test_passed is False:
+                self.repair_attempts += 1
+
             self.successful_writes += 1
             self.last_test_passed = None
             return
 
         if tool_name == "run_tests":
-            self.test_runs += 1
-
             if "测试状态：PASSED" in content:
+                self.test_runs += 1
                 self.last_test_passed = True
             elif "测试状态：FAILED" in content:
+                self.test_runs += 1
                 self.last_test_passed = False
+
+    def repair_budget_exhausted(self) -> bool:
+        """测试仍失败且修复次数达到上限时返回 True。"""
+        return (
+            self.last_test_passed is False
+            and self.repair_attempts >= self.max_repair_attempts
+        )
 
     def completion_blocker(self) -> str | None:
         """返回阻止任务完成的原因；没有原因时返回 None。"""
         if self.successful_writes == 0:
             return None
+
+        if self.repair_budget_exhausted():
+            return (
+                "测试仍未通过，并且已达到最大修复次数"
+                f"（{self.max_repair_attempts} 次）。"
+            )
 
         if self.last_test_passed is None:
             return "代码已被修改，但修改后尚未运行测试。"

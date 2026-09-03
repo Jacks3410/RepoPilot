@@ -136,3 +136,62 @@ def test_agent_blocks_when_verification_never_finishes(
     assert state.status == TaskStatus.BLOCKED
     assert state.step_count == 2
     assert len(fake_llm.calls) == 2
+
+
+def test_agent_fails_after_repair_budget_is_exhausted(
+    tmp_path: Path,
+    monkeypatch,
+) -> None:
+    fake_llm = FakeLLM([
+        make_tool_call(
+            "write_file",
+            '{"path": "demo.py", "content": "x = 1"}',
+            call_id="write_initial",
+        ),
+        make_tool_call("run_tests", call_id="test_initial"),
+        make_tool_call(
+            "write_file",
+            '{"path": "demo.py", "content": "x = 2"}',
+            call_id="write_repair",
+        ),
+        make_tool_call("run_tests", call_id="test_repair"),
+    ])
+
+    def always_fail_tests(
+        tool_call: dict[str, Any],
+    ) -> dict[str, str]:
+        name = tool_call["function"]["name"]
+        content = (
+            "测试状态：FAILED\n退出码：1"
+            if name == "run_tests"
+            else "已写入文件：demo.py"
+        )
+        return {
+            "role": "tool",
+            "tool_call_id": tool_call["id"],
+            "content": content,
+        }
+
+    agent = RepoAgent(
+        workspace=Workspace(tmp_path),
+        max_steps=8,
+        llm_call=fake_llm,
+        approval_gate=ApprovalGate(
+            handler=lambda request: True
+        ),
+        max_repair_attempts=1,
+    )
+    monkeypatch.setattr(
+        agent,
+        "_execute_tool",
+        always_fail_tests,
+    )
+
+    state = agent.run("修改 demo.py")
+
+    assert state.status == TaskStatus.FAILED
+    assert state.step_count == 4
+    assert len(fake_llm.calls) == 4
+    assert state.last_error == (
+        "测试仍未通过，并且已达到最大修复次数（1 次）。"
+    )

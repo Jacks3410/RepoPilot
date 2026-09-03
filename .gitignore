@@ -33,3 +33,4 @@ chat_memory/
 # Test runtime data
 .pytest_cache/
 .pytest_tmp/
+.uv_cache/

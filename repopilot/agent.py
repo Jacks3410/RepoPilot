@@ -27,6 +27,7 @@ SYSTEM_PROMPT = """
 8. 用户拒绝操作后，不能把该操作描述为成功。
 9. 不要声称执行了没有实际执行的操作。
 10. 只有修改后的测试通过，才能声称代码任务完成。
+11. 系统会限制最大修复次数；达到上限后必须停止。
 """.strip()
 
 
@@ -40,10 +41,15 @@ class RepoAgent:
         max_steps: int = 8,
         llm_call: LLMCall = call_llm,
         approval_gate: ApprovalGate | None = None,
+        max_repair_attempts: int = 3,
     ) -> None:
+        if max_repair_attempts < 0:
+            raise ValueError("最大修复次数不能小于 0")
+
         self.workspace = workspace
         self.max_steps = max_steps
         self.llm_call = llm_call
+        self.max_repair_attempts = max_repair_attempts
 
         self.tools = build_workspace_tools(
             workspace,
@@ -68,7 +74,9 @@ class RepoAgent:
         )
         state.start()
 
-        verification = VerificationTracker()
+        verification = VerificationTracker(
+            max_repair_attempts=self.max_repair_attempts
+        )
         messages: list[dict[str, Any]] = [
             {"role": "user", "content": goal}
         ]
@@ -127,6 +135,13 @@ class RepoAgent:
                         result["content"],
                     )
                     state.record(f"执行工具：{tool_name}")
+
+                    if verification.repair_budget_exhausted():
+                        reason = verification.completion_blocker()
+                        assert reason is not None
+                        state.fail(reason)
+                        print(f"\n[Repair Budget] {reason}\n")
+                        break
 
         except Exception as exc:
             if state.status != TaskStatus.BLOCKED:
