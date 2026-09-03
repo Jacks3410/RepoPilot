@@ -8,7 +8,7 @@ from core.llm import call_llm
 from repopilot.file_tools import build_workspace_tools
 from repopilot.state import TaskState, TaskStatus
 from repopilot.workspace import Workspace
-
+from repopilot.approval import ApprovalGate
 
 SYSTEM_PROMPT = """
 你是 RepoPilot，一个代码仓库分析 Agent。
@@ -17,9 +17,11 @@ SYSTEM_PROMPT = """
 1. 回答仓库相关问题前，必须先使用工具读取真实文件。
 2. 所有路径必须相对于仓库根目录。
 3. 不能访问仓库之外的文件。
-4. 当前阶段只有读取权限，不能修改任何文件。
-5. 不要声称执行了没有实际执行的操作。
-6. 得到足够证据后，直接给出简洁结论。
+4. 修改文件前，必须先读取相关文件。
+5. 需要修改文件时调用 write_file，写入操作会由用户审批。
+6. 用户拒绝后不能把操作描述为成功。
+7. 不要声称执行了没有实际执行的操作。
+8. 得到足够证据后，直接给出简洁结论。
 """.strip()
 
 
@@ -32,11 +34,15 @@ class RepoAgent:
         workspace: Workspace,
         max_steps: int = 8,
         llm_call: LLMCall = call_llm,
+        approval_gate: ApprovalGate | None = None,
     ) -> None:
         self.workspace = workspace
         self.max_steps = max_steps
         self.llm_call = llm_call
-        self.tools = build_workspace_tools(workspace)
+        self.tools = build_workspace_tools(
+            workspace,
+            approval_gate=approval_gate,
+        )
         self.tool_map = {tool.name: tool for tool in self.tools}
 
     def run(self, goal: str) -> TaskState:

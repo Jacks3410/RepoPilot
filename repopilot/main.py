@@ -5,7 +5,7 @@ from pathlib import Path
 
 from repopilot.agent import RepoAgent
 from repopilot.workspace import Workspace
-
+from repopilot.approval import ApprovalGate, terminal_approval
 
 def main() -> None:
     print("=" * 60)
@@ -22,7 +22,13 @@ def main() -> None:
         return
 
     workspace = Workspace(Path.cwd())
-    agent = RepoAgent(workspace=workspace, max_steps=8)
+    approval_gate = ApprovalGate(handler=terminal_approval)
+
+    agent = RepoAgent(
+        workspace=workspace,
+        max_steps=8,
+        approval_gate=approval_gate,
+    )
     state = agent.run(goal)
 
     print("\n" + "=" * 60)
