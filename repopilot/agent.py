@@ -11,6 +11,7 @@ from repopilot.audit import build_tool_audit_record
 from repopilot.checkpoint import TaskCheckpointStore
 from repopilot.execution_tools import build_execution_tools
 from repopilot.file_tools import build_workspace_tools
+from repopilot.loop_guard import ToolLoopGuard
 from repopilot.state import TaskState, TaskStatus
 from repopilot.verification import VerificationTracker
 from repopilot.workspace import Workspace
@@ -31,6 +32,7 @@ SYSTEM_PROMPT = """
 9. 不要声称执行了没有实际执行的操作。
 10. 只有修改后的测试通过，才能声称代码任务完成。
 11. 系统会限制最大修复次数；达到上限后必须停止。
+12. 不要用相同参数反复调用返回相同结果的工具。
 """.strip()
 
 
@@ -46,15 +48,19 @@ class RepoAgent:
         approval_gate: ApprovalGate | None = None,
         max_repair_attempts: int = 3,
         checkpoint_store: TaskCheckpointStore | None = None,
+        max_repeated_tool_calls: int = 3,
     ) -> None:
         if max_repair_attempts < 0:
             raise ValueError("最大修复次数不能小于 0")
+        if max_repeated_tool_calls < 2:
+            raise ValueError("重复工具调用阈值不能小于 2")
 
         self.workspace = workspace
         self.max_steps = max_steps
         self.llm_call = llm_call
         self.max_repair_attempts = max_repair_attempts
         self.checkpoint_store = checkpoint_store
+        self.max_repeated_tool_calls = max_repeated_tool_calls
 
         self.tools = build_workspace_tools(
             workspace,
@@ -109,6 +115,10 @@ class RepoAgent:
             ]
 
         try:
+            loop_guard = ToolLoopGuard.from_audit_records(
+                state.tool_calls,
+                max_repeats=self.max_repeated_tool_calls,
+            )
             self._save_checkpoint(state, verification)
 
             while state.status == TaskStatus.RUNNING:
@@ -161,13 +171,13 @@ class RepoAgent:
                     duration_ms = (perf_counter() - started_at) * 1000
                     messages.append(result)
 
-                    state.tool_calls.append(
-                        build_tool_audit_record(
-                            tool_call=tool_call,
-                            result_content=result["content"],
-                            duration_ms=duration_ms,
-                        )
+                    audit_record = build_tool_audit_record(
+                        tool_call=tool_call,
+                        result_content=result["content"],
+                        duration_ms=duration_ms,
                     )
+                    state.tool_calls.append(audit_record)
+                    loop_reason = loop_guard.observe(audit_record)
 
                     tool_name = (
                         tool_call.get("function", {}).get("name", "")
@@ -183,6 +193,9 @@ class RepoAgent:
                         assert reason is not None
                         state.fail(reason)
                         print(f"\n[Repair Budget] {reason}\n")
+                    elif loop_reason is not None:
+                        state.block(loop_reason)
+                        print(f"\n[Loop Guard] {loop_reason}\n")
 
                     self._save_checkpoint(state, verification)
 
@@ -246,7 +259,7 @@ class RepoAgent:
             if tool is None:
                 raise ValueError(f"不存在的工具：{name}")
 
-            print(f"  [Tool] {name}({arguments})")
+            print(f"  [Tool] {name}")
             content = str(tool.execute(**arguments))
 
         except Exception as exc:

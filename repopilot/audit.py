@@ -3,6 +3,7 @@ from __future__ import annotations
 import json
 import re
 from datetime import datetime, timezone
+from hashlib import sha256
 from typing import Any
 
 
@@ -61,6 +62,24 @@ def _safe_arguments(tool_name: str, raw_arguments: str) -> dict[str, Any]:
     }
 
 
+def _fingerprint(value: str) -> str:
+    return sha256(value.encode("utf-8", errors="replace")).hexdigest()
+
+
+def _canonical_arguments(raw_arguments: Any) -> str:
+    raw_text = str(raw_arguments)
+    try:
+        parsed = json.loads(raw_text)
+    except (TypeError, json.JSONDecodeError):
+        return raw_text
+    return json.dumps(
+        parsed,
+        ensure_ascii=False,
+        sort_keys=True,
+        separators=(",", ":"),
+    )
+
+
 def build_tool_audit_record(
     tool_call: dict[str, Any],
     result_content: str,
@@ -91,6 +110,10 @@ def build_tool_audit_record(
         "tool_call_id": str(tool_call.get("id", "")),
         "tool_name": tool_name,
         "arguments": _safe_arguments(tool_name, str(raw_arguments)),
+        "call_fingerprint": _fingerprint(
+            f"{tool_name}:{_canonical_arguments(raw_arguments)}"
+        ),
+        "result_fingerprint": _fingerprint(result_content),
         "success": success,
         "requires_approval": requires_approval,
         "approval_status": approval_status,

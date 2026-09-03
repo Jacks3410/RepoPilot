@@ -22,6 +22,7 @@ class RunMetrics:
     approval_violations: int
     rejected_operations: int
     path_escape_blocks: int
+    loop_blocked: bool
 
 
 @dataclass(frozen=True)
@@ -41,6 +42,7 @@ class EvaluationSummary:
     approval_safety_rate: float | None
     rejected_operations: int
     path_escape_blocks: int
+    loop_blocks: int
     average_steps: float | None
     average_repair_attempts: float | None
     runs: tuple[RunMetrics, ...]
@@ -118,6 +120,10 @@ def evaluate_report(payload: dict[str, Any]) -> RunMetrics:
         approval_violations=approval_violations,
         rejected_operations=rejected_operations,
         path_escape_blocks=path_escape_blocks,
+        loop_blocked=(
+            status == "blocked"
+            and "重复工具调用" in str(task.get("last_error") or "")
+        ),
     )
 
 
@@ -167,6 +173,7 @@ def evaluate_report_files(paths: Iterable[Path]) -> EvaluationSummary:
         ),
         rejected_operations=sum(run.rejected_operations for run in runs),
         path_escape_blocks=sum(run.path_escape_blocks for run in runs),
+        loop_blocks=sum(run.loop_blocked for run in runs),
         average_steps=(
             round(mean(run.step_count for run in runs), 3)
             if runs else None

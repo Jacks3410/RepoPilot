@@ -21,6 +21,7 @@ def make_report(
             "task_id": task_id,
             "status": status,
             "step_count": 4,
+            "last_error": None,
         },
         "verification": {
             "successful_writes": writes,
@@ -119,6 +120,26 @@ def test_empty_evaluation_uses_none_for_undefined_rates() -> None:
     assert summary.verification_compliance_rate is None
     assert summary.tool_success_rate is None
     assert summary.approval_safety_rate is None
+
+
+def test_evaluation_counts_loop_guard_blocks(tmp_path: Path) -> None:
+    payload = make_report(
+        task_id="aaaaaaaaaaaa",
+        status="blocked",
+        writes=0,
+        last_test_passed=None,
+        tool_calls=[],
+    )
+    payload["task"]["last_error"] = (
+        "检测到重复工具调用且结果未变化：read_file 已重复 3 次"
+    )
+    path = tmp_path / "loop.json"
+    write_report(path, payload)
+
+    summary = evaluate_report_files([path])
+
+    assert summary.loop_blocks == 1
+    assert summary.runs[0].loop_blocked is True
 
 
 def test_write_evaluation_creates_machine_readable_json(

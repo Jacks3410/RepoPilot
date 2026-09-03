@@ -56,8 +56,7 @@ class TaskState:
             raise RuntimeError("任务当前不处于运行状态")
 
         if self.step_count >= self.max_steps:
-            self.status = TaskStatus.BLOCKED
-            self.record("达到最大执行步数")
+            self.block("达到最大执行步数")
             raise RuntimeError("达到最大执行步数")
 
         self.step_count += 1
@@ -71,6 +70,11 @@ class TaskState:
         self.last_error = str(error)
         self.status = TaskStatus.FAILED
         self.record(f"任务失败: {self.last_error}")
+
+    def block(self, reason: str) -> None:
+        self.last_error = reason
+        self.status = TaskStatus.BLOCKED
+        self.record(f"任务阻断: {reason}")
 
     def record(self, message: str) -> None:
         timestamp = datetime.now(timezone.utc).isoformat()

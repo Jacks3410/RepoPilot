@@ -107,3 +107,32 @@ def test_agent_stops_at_max_steps(tmp_path: Path) -> None:
     assert state.status == TaskStatus.BLOCKED
     assert state.step_count == 1
     assert len(fake_llm.calls) == 1
+
+
+def test_agent_blocks_repeated_tool_results(tmp_path: Path) -> None:
+    (tmp_path / "README.md").write_text(
+        "RepoPilot demo",
+        encoding="utf-8",
+    )
+    repeated_call = make_tool_call(
+        "read_file",
+        '{"path": "README.md"}',
+    )
+    fake_llm = FakeLLM([
+        deepcopy(repeated_call),
+        deepcopy(repeated_call),
+        deepcopy(repeated_call),
+    ])
+    agent = RepoAgent(
+        workspace=Workspace(tmp_path),
+        max_steps=8,
+        llm_call=fake_llm,
+        max_repeated_tool_calls=3,
+    )
+
+    state = agent.run("读取 README.md")
+
+    assert state.status == TaskStatus.BLOCKED
+    assert state.step_count == 3
+    assert len(state.tool_calls) == 3
+    assert "read_file 已重复 3 次" in str(state.last_error)

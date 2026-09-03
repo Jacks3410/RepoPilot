@@ -54,6 +54,7 @@ def main() -> None:
     print(f"审批安全率：{_format_rate(summary.approval_safety_rate)}")
     print(f"审批违规数：{summary.approval_violations}")
     print(f"路径越界拦截数：{summary.path_escape_blocks}")
+    print(f"无进展循环阻断数：{summary.loop_blocks}")
     print(f"平均执行步数：{summary.average_steps}")
     print(f"评测结果已保存：{output}")
 
