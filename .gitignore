@@ -25,3 +25,7 @@ note_modules/
 .vscode/
 *.swp
 *.swo
+
+# Agent runtime data
+chat_memory/
+.repopilot/
