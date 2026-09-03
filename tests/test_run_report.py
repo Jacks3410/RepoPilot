@@ -20,6 +20,11 @@ def make_completed_state(tmp_path: Path) -> TaskState:
         "repair_attempts": 0,
         "last_test_passed": True,
     }
+    state.tool_calls = [{
+        "tool_name": "run_tests",
+        "success": True,
+        "duration_ms": 12.5,
+    }]
     return state
 
 
@@ -44,6 +49,7 @@ def test_writer_creates_structured_json_report(tmp_path: Path) -> None:
     assert payload["verification"]["last_test_passed"] is True
     assert payload["git"]["status"] == " M demo.py"
     assert len(payload["events"]) == 3
+    assert payload["tool_calls"][0]["tool_name"] == "run_tests"
 
 
 def test_writer_replaces_existing_report_atomically(tmp_path: Path) -> None:

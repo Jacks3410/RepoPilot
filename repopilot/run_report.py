@@ -47,6 +47,7 @@ class RunReportWriter:
             },
             "verification": dict(state.verification),
             "events": list(state.events),
+            "tool_calls": list(state.tool_calls),
             "git": {
                 "status": git_status,
                 "diff": git_diff,

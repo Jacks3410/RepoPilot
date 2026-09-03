@@ -61,6 +61,9 @@ def test_agent_executes_tool_then_finishes(tmp_path: Path) -> None:
     assert state.status == TaskStatus.COMPLETED
     assert state.step_count == 2
     assert len(fake_llm.calls) == 2
+    assert len(state.tool_calls) == 1
+    assert state.tool_calls[0]["tool_name"] == "read_file"
+    assert state.tool_calls[0]["success"] is True
 
     second_messages = fake_llm.calls[1]["messages"]
     assert second_messages[-1]["role"] == "tool"

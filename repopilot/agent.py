@@ -2,10 +2,12 @@ from __future__ import annotations
 
 import json
 from collections.abc import Callable
+from time import perf_counter
 from typing import Any
 
 from core.llm import call_llm
 from repopilot.approval import ApprovalGate
+from repopilot.audit import build_tool_audit_record
 from repopilot.execution_tools import build_execution_tools
 from repopilot.file_tools import build_workspace_tools
 from repopilot.state import TaskState, TaskStatus
@@ -124,8 +126,18 @@ class RepoAgent:
                     print(f"\nRepoPilot：{content}\n")
 
                 for tool_call in tool_calls:
+                    started_at = perf_counter()
                     result = self._execute_tool(tool_call)
+                    duration_ms = (perf_counter() - started_at) * 1000
                     messages.append(result)
+
+                    state.tool_calls.append(
+                        build_tool_audit_record(
+                            tool_call=tool_call,
+                            result_content=result["content"],
+                            duration_ms=duration_ms,
+                        )
+                    )
 
                     tool_name = (
                         tool_call.get("function", {}).get("name", "")

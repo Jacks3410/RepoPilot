@@ -26,6 +26,7 @@ class TaskState:
     step_count: int = 0
     max_steps: int = 12
     events: list[str] = field(default_factory=list)
+    tool_calls: list[dict[str, Any]] = field(default_factory=list)
     last_error: str | None = None
     verification: dict[str, Any] = field(default_factory=dict)
 
