@@ -6,6 +6,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
+from repopilot.audit import redact_sensitive_data
 from repopilot.state import TaskState
 
 
@@ -33,7 +34,7 @@ class RunReportWriter:
         git_diff: str = "",
     ) -> dict[str, Any]:
         """构建版本化、可 JSON 序列化的报告内容。"""
-        return {
+        payload = {
             "schema_version": 2,
             "generated_at": datetime.now(timezone.utc).isoformat(),
             "task": {
@@ -53,6 +54,7 @@ class RunReportWriter:
                 "diff": git_diff,
             },
         }
+        return redact_sensitive_data(payload)
 
     def write(
         self,

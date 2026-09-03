@@ -63,3 +63,16 @@ def test_writer_replaces_existing_report_atomically(tmp_path: Path) -> None:
     assert first_path == second_path
     assert payload["git"]["status"] == " M second.py"
     assert not second_path.with_suffix(".json.tmp").exists()
+
+
+def test_writer_redacts_secrets_from_entire_report(tmp_path: Path) -> None:
+    state = make_completed_state(tmp_path)
+    secret = "sk-exampleSecret123456"
+    state.goal = f"检查 OPENAI_API_KEY={secret}"
+    writer = RunReportWriter(tmp_path)
+
+    report_path = writer.write(state, git_diff=f"+TOKEN = '{secret}'")
+    raw = report_path.read_text(encoding="utf-8")
+
+    assert secret not in raw
+    assert "[REDACTED]" in raw

@@ -4,28 +4,11 @@ import json
 import re
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any
-
-from repopilot.audit import redact_sensitive_text
+from repopilot.audit import redact_sensitive_data
 from repopilot.state import TaskState, TaskStatus
 
 
 _TASK_ID_PATTERN = re.compile(r"^[a-f0-9]{12}$")
-
-
-def _redact_value(value: Any) -> Any:
-    if isinstance(value, str):
-        return redact_sensitive_text(value)
-    if isinstance(value, list):
-        return [_redact_value(item) for item in value]
-    if isinstance(value, dict):
-        return {
-            str(key): _redact_value(item)
-            for key, item in value.items()
-        }
-    return value
-
-
 @dataclass(frozen=True)
 class TaskCheckpointStore:
     """安全保存并恢复不包含模型上下文的任务检查点。"""
@@ -65,7 +48,7 @@ class TaskCheckpointStore:
                 "verification": state.verification,
             },
         }
-        safe_payload = _redact_value(payload)
+        safe_payload = redact_sensitive_data(payload)
 
         temporary.write_text(
             json.dumps(safe_payload, ensure_ascii=False, indent=2),

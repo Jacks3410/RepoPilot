@@ -29,6 +29,20 @@ def redact_sensitive_text(value: str) -> str:
     return redacted
 
 
+def redact_sensitive_data(value: Any) -> Any:
+    """递归遮盖字符串容器中的常见凭证。"""
+    if isinstance(value, str):
+        return redact_sensitive_text(value)
+    if isinstance(value, list):
+        return [redact_sensitive_data(item) for item in value]
+    if isinstance(value, dict):
+        return {
+            str(key): redact_sensitive_data(item)
+            for key, item in value.items()
+        }
+    return value
+
+
 def _safe_arguments(tool_name: str, raw_arguments: str) -> dict[str, Any]:
     allowed = _SAFE_ARGUMENTS.get(tool_name, set())
 
