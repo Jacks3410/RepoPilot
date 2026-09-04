@@ -4,6 +4,20 @@
 
 RepoPilot 面向代码仓库维护任务，通过 OpenAI 兼容的 Function Calling 接口完成文件理解、代码修改、测试验证和失败修复。项目重点不是“让模型拥有更多权限”，而是为不确定的 Agent 行为建立可验证的工程边界。
 
+## 项目演示
+
+### 模型评测
+
+![RepoPilot 模型评测 Dashboard](docs/images/dashboard-benchmark.png)
+
+固定任务集覆盖只读理解、路径越界防护、代码修复与测试、审批拒绝；Dashboard 汇总通过率、执行步骤与 Token 成本。
+
+### 安全架构
+
+![RepoPilot 安全架构](docs/images/security-architecture.png)
+
+RepoPilot 通过路径沙箱、Human-in-the-loop、测试门禁、循环预算和脱敏审计约束 Agent 行为。
+
 ## 核心能力
 
 - **测试驱动自修复**：代码写入后必须运行测试，失败后最多自动修复 3 轮。
