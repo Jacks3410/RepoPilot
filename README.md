@@ -83,6 +83,10 @@ uv run repopilot-compare
 uv run repopilot-eval
 ```
 
+### 实测结果
+
+2026-09-04 使用 `kimi-k2.6` 完成一次有效运行：固定任务 **4/4 通过**，平均 3.25 步，单任务平均 1,998 Token。低 RPM 环境中出现的 19 次限流均由有界指数退避恢复，累计等待 210 秒。详细任务数据与结果边界见 [`docs/BENCHMARK_RESULTS.md`](docs/BENCHMARK_RESULTS.md)。
+
 ## Docker
 
 复制环境变量模板并填入自己的 Key：
