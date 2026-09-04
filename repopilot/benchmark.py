@@ -36,8 +36,10 @@ class BenchmarkCase:
 @dataclass(frozen=True)
 class BenchmarkCaseResult:
     case_id: str
+    valid: bool
     passed: bool
     failures: tuple[str, ...]
+    infrastructure_error: str | None
     status: str
     step_count: int
     total_tokens: int
@@ -52,6 +54,8 @@ class BenchmarkSummary:
     model_id: str
     generated_at: str
     total_cases: int
+    valid_cases: int
+    infrastructure_failures: int
     passed_cases: int
     pass_rate: float | None
     average_steps: float | None
@@ -66,6 +70,18 @@ class BenchmarkSummary:
 
 
 LLMCallFactory = Callable[[BenchmarkCase], LLMCall]
+
+_INFRASTRUCTURE_ERRORS = (
+    ("401", "authentication"),
+    ("incorrect api key", "authentication"),
+    ("authentication", "authentication"),
+    ("429", "rate_limit"),
+    ("rate limit", "rate_limit"),
+    ("connection error", "connection"),
+    ("apiconnectionerror", "connection"),
+    ("timed out", "timeout"),
+    ("timeout", "timeout"),
+)
 
 
 def _validate_fixture_path(path: str) -> None:
@@ -141,6 +157,30 @@ def grade_case(case: BenchmarkCase, state: TaskState) -> BenchmarkCaseResult:
     errors = "\n".join(
         str(record.get("error") or "") for record in state.tool_calls
     )
+    last_error = str(state.last_error or "")
+    normalized_error = last_error.lower()
+    infrastructure_error = next(
+        (
+            category
+            for marker, category in _INFRASTRUCTURE_ERRORS
+            if marker in normalized_error
+        ),
+        None,
+    )
+
+    if infrastructure_error is not None:
+        return BenchmarkCaseResult(
+            case_id=case.case_id,
+            valid=False,
+            passed=False,
+            failures=(f"基础设施错误：{infrastructure_error}",),
+            infrastructure_error=infrastructure_error,
+            status=state.status.value,
+            step_count=state.step_count,
+            total_tokens=int(state.model_usage.get("total_tokens", 0)),
+            tool_names=tool_names,
+            task_id=state.task_id,
+        )
 
     if state.status.value not in case.allowed_statuses:
         failures.append(f"状态不符合预期：{state.status.value}")
@@ -169,8 +209,10 @@ def grade_case(case: BenchmarkCase, state: TaskState) -> BenchmarkCaseResult:
 
     return BenchmarkCaseResult(
         case_id=case.case_id,
+        valid=True,
         passed=not failures,
         failures=tuple(failures),
+        infrastructure_error=None,
         status=state.status.value,
         step_count=state.step_count,
         total_tokens=int(state.model_usage.get("total_tokens", 0)),
@@ -216,23 +258,30 @@ def run_benchmark(
         RunReportWriter(workspace.root).write(state)
         results.append(grade_case(case, state))
 
-    passed = sum(result.passed for result in results)
-    total_tokens = sum(result.total_tokens for result in results)
+    valid_results = [result for result in results if result.valid]
+    passed = sum(result.passed for result in valid_results)
+    total_tokens = sum(result.total_tokens for result in valid_results)
     return BenchmarkSummary(
-        benchmark_version=1,
+        benchmark_version=2,
         run_id=run_id,
         model_id=model_id,
         generated_at=datetime.now(timezone.utc).isoformat(),
         total_cases=len(results),
+        valid_cases=len(valid_results),
+        infrastructure_failures=len(results) - len(valid_results),
         passed_cases=passed,
-        pass_rate=round(passed / len(results), 4) if results else None,
+        pass_rate=(
+            round(passed / len(valid_results), 4)
+            if valid_results else None
+        ),
         average_steps=(
-            round(mean(result.step_count for result in results), 3)
-            if results else None
+            round(mean(result.step_count for result in valid_results), 3)
+            if valid_results else None
         ),
         total_tokens=total_tokens,
         average_tokens=(
-            round(total_tokens / len(results), 3) if results else None
+            round(total_tokens / len(valid_results), 3)
+            if valid_results else None
         ),
         results=tuple(results),
     )

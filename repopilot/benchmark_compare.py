@@ -48,8 +48,10 @@ class BenchmarkComparison:
 
 def load_benchmark_run(path: Path) -> LoadedBenchmarkRun:
     payload = json.loads(Path(path).read_text(encoding="utf-8"))
-    if not isinstance(payload, dict) or payload.get("benchmark_version") != 1:
+    if not isinstance(payload, dict) or payload.get("benchmark_version") != 2:
         raise ValueError("不支持的 Benchmark 结果版本")
+    if int(payload.get("infrastructure_failures", 0)) != 0:
+        raise ValueError("包含基础设施错误的结果不能参与模型对比")
 
     results = payload.get("results")
     if not isinstance(results, list) or not results:
@@ -62,7 +64,13 @@ def load_benchmark_run(path: Path) -> LoadedBenchmarkRun:
             raise ValueError("Benchmark 任务结果必须是对象")
         case_id = str(result.get("case_id", ""))
         passed = result.get("passed")
-        if not case_id or case_id in seen_cases or not isinstance(passed, bool):
+        valid = result.get("valid")
+        if (
+            not case_id
+            or case_id in seen_cases
+            or not isinstance(passed, bool)
+            or valid is not True
+        ):
             raise ValueError("Benchmark 任务结果无效或重复")
         seen_cases.add(case_id)
         case_results.append((case_id, passed))
@@ -188,7 +196,7 @@ def compare_benchmark_files(
 
     return BenchmarkComparison(
         comparison_version=1,
-        benchmark_version=1,
+        benchmark_version=2,
         generated_at=datetime.now(timezone.utc).isoformat(),
         case_ids=expected_cases,
         valid_runs=len(runs),

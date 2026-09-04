@@ -67,6 +67,8 @@ uv run streamlit run .\app.py
 uv run repopilot-benchmark
 ```
 
+鉴权失败、限流、连接中断和超时会单独标记为基础设施错误，不计入模型通过率，也不会进入排行榜。
+
 切换 `OPENAI_BASE_URL`、`OPENAI_MODEL_ID` 和对应 Key，分别生成不同模型的结果，然后执行：
 
 ```powershell

@@ -55,7 +55,9 @@ def main() -> None:
 
     print("\n" + "=" * 60)
     print(f"模型：{summary.model_id}")
-    print(f"通过任务：{summary.passed_cases}/{summary.total_cases}")
+    print(f"有效任务：{summary.valid_cases}/{summary.total_cases}")
+    print(f"基础设施失败：{summary.infrastructure_failures}")
+    print(f"通过任务：{summary.passed_cases}/{summary.valid_cases}")
     print(
         "通过率："
         f"{summary.pass_rate:.1%}" if summary.pass_rate is not None else "通过率：N/A"
@@ -63,6 +65,9 @@ def main() -> None:
     print(f"平均步骤：{summary.average_steps}")
     print(f"总 Token：{summary.total_tokens}")
     print(f"结果已保存：{output}")
+
+    if summary.infrastructure_failures:
+        raise SystemExit("评测包含基础设施错误，结果不会进入模型排行。")
 
 
 if __name__ == "__main__":

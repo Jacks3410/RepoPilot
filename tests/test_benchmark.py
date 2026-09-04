@@ -23,6 +23,11 @@ class FakeLLM:
         return deepcopy(self.responses.pop(0))
 
 
+class FailingLLM:
+    def __call__(self, **kwargs: Any) -> dict[str, Any]:
+        raise RuntimeError("Error code: 401 - Incorrect API key provided")
+
+
 def make_read_case() -> BenchmarkCase:
     return BenchmarkCase(
         case_id="read_case",
@@ -76,6 +81,8 @@ def test_prepare_workspace_and_grade_success(tmp_path: Path) -> None:
 
     assert workspace.read_text("README.md") == "# Demo\n"
     assert result.passed is True
+    assert result.valid is True
+    assert result.infrastructure_error is None
     assert result.failures == ()
 
 
@@ -118,7 +125,45 @@ def test_run_benchmark_records_score_and_tokens(tmp_path: Path) -> None:
     )
 
     assert summary.total_cases == 1
+    assert summary.valid_cases == 1
+    assert summary.infrastructure_failures == 0
     assert summary.passed_cases == 1
     assert summary.pass_rate == 1.0
     assert summary.total_tokens == 10
     assert summary.results[0].tool_names == ("read_file",)
+
+
+def test_authentication_failure_is_not_scored_as_model_failure(
+    tmp_path: Path,
+) -> None:
+    case = make_read_case()
+    state = TaskState.create(case.goal, tmp_path)
+    state.start()
+    state.fail("Error code: 401 - Incorrect API key provided")
+
+    result = grade_case(case, state)
+
+    assert result.valid is False
+    assert result.passed is False
+    assert result.infrastructure_error == "authentication"
+
+
+def test_run_benchmark_excludes_infrastructure_failure_from_summary(
+    tmp_path: Path,
+) -> None:
+    summary = run_benchmark(
+        cases=[make_read_case()],
+        workspaces_root=tmp_path / "workspaces",
+        model_id="unavailable-model",
+        llm_call_factory=lambda selected_case: FailingLLM(),
+    )
+
+    assert summary.benchmark_version == 2
+    assert summary.total_cases == 1
+    assert summary.valid_cases == 0
+    assert summary.infrastructure_failures == 1
+    assert summary.passed_cases == 0
+    assert summary.pass_rate is None
+    assert summary.average_steps is None
+    assert summary.total_tokens == 0
+    assert summary.average_tokens is None

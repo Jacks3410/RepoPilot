@@ -19,14 +19,15 @@ def make_result(
     total_tokens: int,
 ) -> dict:
     return {
-        "benchmark_version": 1,
+        "benchmark_version": 2,
         "run_id": run_id,
         "model_id": model_id,
+        "infrastructure_failures": 0,
         "average_steps": average_steps,
         "total_tokens": total_tokens,
         "results": [
-            {"case_id": "case_a", "passed": passed[0]},
-            {"case_id": "case_b", "passed": passed[1]},
+            {"case_id": "case_a", "valid": True, "passed": passed[0]},
+            {"case_id": "case_b", "valid": True, "passed": passed[1]},
         ],
     }
 
@@ -128,3 +129,13 @@ def test_write_comparison_creates_json_and_markdown(tmp_path: Path) -> None:
 def test_compare_requires_at_least_one_valid_result() -> None:
     with pytest.raises(ValueError, match="没有可比较"):
         compare_benchmark_files([])
+
+
+def test_compare_rejects_infrastructure_failures(tmp_path: Path) -> None:
+    payload = make_result("kimi", "failed-run", (False, False), 1, 0)
+    payload["infrastructure_failures"] = 2
+    path = tmp_path / "failed.json"
+    write_result(path, payload)
+
+    with pytest.raises(ValueError, match="基础设施错误"):
+        load_benchmark_run(path)
