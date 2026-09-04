@@ -106,6 +106,8 @@ uv run python -m pytest -q
 
 项目包含覆盖路径沙箱、审批门禁、测试执行、自修复预算、循环阻断、检查点、脱敏审计和评测链路的单元及集成测试。
 
+GitHub Actions 会在每次提交和 Pull Request 中自动运行测试、构建 Python 发布包并验证 Docker 镜像可构建。
+
 ## 项目结构
 
 ```text
