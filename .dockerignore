@@ -1,0 +1,14 @@
+.git
+.github
+.venv
+.uv_cache
+.pytest_cache
+.pytest_tmp
+.repopilot
+chat_memory
+__pycache__
+*.pyc
+*.pyo
+*.log
+typescript/node_modules
+node_modules

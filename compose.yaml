@@ -1,0 +1,25 @@
+services:
+  dashboard:
+    build: .
+    ports:
+      - "8501:8501"
+    environment:
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+      OPENAI_BASE_URL: ${OPENAI_BASE_URL:-https://api.moonshot.cn/v1}
+      OPENAI_MODEL_ID: ${OPENAI_MODEL_ID:-kimi-k2.6}
+    volumes:
+      - ./.repopilot:/app/.repopilot
+    restart: unless-stopped
+
+  agent:
+    build: .
+    profiles: ["agent"]
+    environment:
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+      OPENAI_BASE_URL: ${OPENAI_BASE_URL:-https://api.moonshot.cn/v1}
+      OPENAI_MODEL_ID: ${OPENAI_MODEL_ID:-kimi-k2.6}
+    volumes:
+      - ./.repopilot:/app/.repopilot
+    stdin_open: true
+    tty: true
+    entrypoint: ["repopilot"]
