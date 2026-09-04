@@ -130,6 +130,8 @@ def test_run_benchmark_records_score_and_tokens(tmp_path: Path) -> None:
     assert summary.passed_cases == 1
     assert summary.pass_rate == 1.0
     assert summary.total_tokens == 10
+    assert summary.total_retries == 0
+    assert summary.total_retry_wait_ms == 0
     assert summary.results[0].tool_names == ("read_file",)
 
 

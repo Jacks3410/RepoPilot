@@ -49,6 +49,7 @@ def test_agent_executes_tool_then_finishes(tmp_path: Path) -> None:
         {
             "role": "assistant",
             "content": "README 内容是 RepoPilot demo。",
+            "retry": {"count": 2, "wait_ms": 3000},
         },
     ])
 
@@ -64,6 +65,8 @@ def test_agent_executes_tool_then_finishes(tmp_path: Path) -> None:
     assert len(state.tool_calls) == 1
     assert state.tool_calls[0]["tool_name"] == "read_file"
     assert state.tool_calls[0]["success"] is True
+    assert state.model_usage["retry_count"] == 2
+    assert state.model_usage["retry_wait_ms"] == 3000
 
     second_messages = fake_llm.calls[1]["messages"]
     assert second_messages[-1]["role"] == "tool"

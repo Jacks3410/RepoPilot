@@ -43,6 +43,8 @@ class BenchmarkCaseResult:
     status: str
     step_count: int
     total_tokens: int
+    retry_count: int
+    retry_wait_ms: int
     tool_names: tuple[str, ...]
     task_id: str
 
@@ -61,6 +63,8 @@ class BenchmarkSummary:
     average_steps: float | None
     total_tokens: int
     average_tokens: float | None
+    total_retries: int
+    total_retry_wait_ms: int
     results: tuple[BenchmarkCaseResult, ...]
 
     def to_dict(self) -> dict[str, Any]:
@@ -178,6 +182,8 @@ def grade_case(case: BenchmarkCase, state: TaskState) -> BenchmarkCaseResult:
             status=state.status.value,
             step_count=state.step_count,
             total_tokens=int(state.model_usage.get("total_tokens", 0)),
+            retry_count=int(state.model_usage.get("retry_count", 0)),
+            retry_wait_ms=int(state.model_usage.get("retry_wait_ms", 0)),
             tool_names=tool_names,
             task_id=state.task_id,
         )
@@ -216,6 +222,8 @@ def grade_case(case: BenchmarkCase, state: TaskState) -> BenchmarkCaseResult:
         status=state.status.value,
         step_count=state.step_count,
         total_tokens=int(state.model_usage.get("total_tokens", 0)),
+        retry_count=int(state.model_usage.get("retry_count", 0)),
+        retry_wait_ms=int(state.model_usage.get("retry_wait_ms", 0)),
         tool_names=tool_names,
         task_id=state.task_id,
     )
@@ -283,6 +291,8 @@ def run_benchmark(
             round(total_tokens / len(valid_results), 3)
             if valid_results else None
         ),
+        total_retries=sum(result.retry_count for result in results),
+        total_retry_wait_ms=sum(result.retry_wait_ms for result in results),
         results=tuple(results),
     )
 

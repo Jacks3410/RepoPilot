@@ -33,6 +33,8 @@ class TaskState:
         "prompt_tokens": 0,
         "completion_tokens": 0,
         "total_tokens": 0,
+        "retry_count": 0,
+        "retry_wait_ms": 0,
     })
 
     @classmethod
@@ -88,6 +90,17 @@ class TaskState:
             value = usage.get(key)
             if isinstance(value, int) and not isinstance(value, bool) and value >= 0:
                 self.model_usage[key] = self.model_usage.get(key, 0) + value
+
+    def record_model_retry(self, retry: Any) -> None:
+        if not isinstance(retry, dict):
+            return
+        for source, target in (
+            ("count", "retry_count"),
+            ("wait_ms", "retry_wait_ms"),
+        ):
+            value = retry.get(source)
+            if isinstance(value, int) and not isinstance(value, bool) and value >= 0:
+                self.model_usage[target] = self.model_usage.get(target, 0) + value
 
     def record(self, message: str) -> None:
         timestamp = datetime.now(timezone.utc).isoformat()

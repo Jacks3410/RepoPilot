@@ -134,6 +134,7 @@ class RepoAgent:
                     system_prompt=SYSTEM_PROMPT,
                 )
                 state.record_model_usage(assistant.get("usage"))
+                state.record_model_retry(assistant.get("retry"))
 
                 messages.append(
                     self._assistant_history_message(assistant)

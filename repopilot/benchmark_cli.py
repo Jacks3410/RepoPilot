@@ -64,6 +64,8 @@ def main() -> None:
     )
     print(f"平均步骤：{summary.average_steps}")
     print(f"总 Token：{summary.total_tokens}")
+    print(f"限流/瞬时故障重试：{summary.total_retries}")
+    print(f"累计重试等待：{summary.total_retry_wait_ms / 1000:.1f} 秒")
     print(f"结果已保存：{output}")
 
     if summary.infrastructure_failures:
