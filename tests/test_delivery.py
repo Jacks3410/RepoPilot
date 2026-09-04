@@ -27,7 +27,7 @@ def test_docker_delivery_uses_non_root_user_and_healthcheck() -> None:
         (PROJECT_ROOT / "compose.yaml").read_text(encoding="utf-8")
     )
 
-    assert "ghcr.io/astral-sh/uv:0.11.16" in dockerfile
+    assert "ghcr.io/astral-sh/uv:0.12.9" in dockerfile
     assert "USER repopilot" in dockerfile
     assert "HEALTHCHECK" in dockerfile
     assert '"streamlit", "run", "app.py"' in dockerfile

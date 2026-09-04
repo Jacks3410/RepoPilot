@@ -5,13 +5,13 @@ from collections.abc import Callable
 from time import perf_counter
 from typing import Any
 
-from core.llm import call_llm
 from repopilot.approval import ApprovalGate
 from repopilot.audit import build_tool_audit_record
 from repopilot.checkpoint import TaskCheckpointStore
 from repopilot.execution_tools import build_execution_tools
 from repopilot.file_tools import build_workspace_tools
 from repopilot.loop_guard import ToolLoopGuard
+from repopilot.llm import call_llm
 from repopilot.state import TaskState, TaskStatus
 from repopilot.test_runner import TestRunner
 from repopilot.verification import VerificationTracker

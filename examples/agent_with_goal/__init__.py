@@ -1,1 +1,0 @@
-"""Agent with Goal example."""

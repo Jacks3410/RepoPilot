@@ -126,4 +126,4 @@ RepoPilot 仍是学习与作品集项目。运行前请使用独立测试仓库�
 
 ## 来源与许可
 
-本项目基于 [Learn-OpenClaw](https://github.com/lasywolf/Learn-OpenClaw) 教程继续开发，原始教程说明保存在 [`docs/UPSTREAM_README.md`](docs/UPSTREAM_README.md)。项目沿用仓库中的 MIT License。
+本项目基于 [Learn-OpenClaw](https://github.com/lasywolf/Learn-OpenClaw) 教程继续开发，来源和改造范围记录在 [`docs/UPSTREAM.md`](docs/UPSTREAM.md)。项目沿用仓库中的 MIT License。

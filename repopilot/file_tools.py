@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from tools import Tool
+from repopilot.tool import Tool
 
 from repopilot.approval import ApprovalGate, ApprovalRequest
 from repopilot.workspace import Workspace

@@ -10,9 +10,9 @@ from statistics import mean
 from typing import Any, Callable
 from uuid import uuid4
 
-from core.llm import call_llm
 from repopilot.agent import LLMCall, RepoAgent
 from repopilot.approval import ApprovalGate, ApprovalRequest
+from repopilot.llm import call_llm
 from repopilot.run_report import RunReportWriter
 from repopilot.state import TaskState
 from repopilot.test_runner import TestRunner

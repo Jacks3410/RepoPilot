@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import subprocess
 
-from tools import Tool
+from repopilot.tool import Tool
 
 from repopilot.approval import ApprovalGate, ApprovalRequest
 from repopilot.test_runner import TestRunner
